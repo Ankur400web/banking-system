@@ -120,4 +120,6 @@ public class UserService {
 
         userRepository.delete(user);
     }
+
+    public void extraUnUsedFunc(){}
 }
