@@ -6,6 +6,10 @@ import com.BankingSystem.Banking_System.repository.UserRepository;
 import com.BankingSystem.Banking_System.entity.User;
 import org.springframework.stereotype.Service;
 
+
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class UserService {
     private final UserRepository userRepository;
@@ -37,5 +41,74 @@ public class UserService {
         userResponse.setCreatedAt(savedUser.getCreatedAt());
 
         return userResponse;
+    }
+
+    public List<UserResponse> getAllUsers(){
+
+        List<User> users = userRepository.findAll();
+
+        if ((users.isEmpty())){
+            throw new RuntimeException("No User Exist");
+        }
+
+        List<UserResponse> userResponsesList = new ArrayList<>();
+
+        for (User u:users){
+            UserResponse userResponse = new UserResponse();
+
+            userResponse.setId(u.getId());
+            userResponse.setFirstName(u.getFirstName());
+            userResponse.setLastName(u.getLastName());
+            userResponse.setEmail(u.getEmail());
+            userResponse.setCreatedAt(u.getCreatedAt());
+            userResponsesList.add(userResponse);
+        }
+
+        return userResponsesList;
+
+    }
+
+    public UserResponse getUserById(Long id) {
+
+        User user = userRepository.findUserById(id);
+
+        if (user == null) {
+            throw new RuntimeException("User doesn't exist");
+        }
+
+        UserResponse userResponse = new UserResponse();
+
+        userResponse.setId(user.getId());
+        userResponse.setFirstName(user.getFirstName());
+        userResponse.setLastName(user.getLastName());
+        userResponse.setEmail(user.getEmail());
+        userResponse.setCreatedAt(user.getCreatedAt());
+
+        return userResponse;
+    }
+
+    public UserResponse updateUser(Long id, CreateUserRequest request){
+        User user = userRepository.findUserById(id);
+        if(user==null){
+            throw new RuntimeException("User doesn't exist");
+        }
+
+
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setEmail(request.getEmail());
+
+        userRepository.save(user);
+
+        UserResponse userResponse = new UserResponse();
+
+        userResponse.setFirstName(user.getFirstName());
+        userResponse.setLastName(user.getLastName());
+        userResponse.setEmail(user.getEmail());
+        userResponse.setId(user.getId());
+        userResponse.setCreatedAt(user.getCreatedAt());
+
+        return userResponse;
+
     }
 }
