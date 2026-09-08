@@ -111,4 +111,13 @@ public class UserService {
         return userResponse;
 
     }
+
+    public void deleteUserById(Long id){
+        User user = userRepository.findUserById(id);
+        if (user==null){
+            throw new RuntimeException("User doesn't exist");
+        }
+
+        userRepository.delete(user);
+    }
 }
