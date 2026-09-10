@@ -2,6 +2,7 @@ package com.BankingSystem.Banking_System.service;
 
 import com.BankingSystem.Banking_System.dto.CreateUserRequest;
 import com.BankingSystem.Banking_System.dto.UserResponse;
+import com.BankingSystem.Banking_System.exception.UserNotFoundException;
 import com.BankingSystem.Banking_System.repository.UserRepository;
 import com.BankingSystem.Banking_System.entity.User;
 import org.springframework.stereotype.Service;
@@ -48,7 +49,7 @@ public class UserService {
         List<User> users = userRepository.findAll();
 
         if ((users.isEmpty())){
-            throw new RuntimeException("No User Exist");
+            throw new UserNotFoundException("User doesn't exist");
         }
 
         List<UserResponse> userResponsesList = new ArrayList<>();
@@ -73,7 +74,7 @@ public class UserService {
         User user = userRepository.findUserById(id);
 
         if (user == null) {
-            throw new RuntimeException("User doesn't exist");
+            throw new UserNotFoundException("User doesn't exist");
         }
 
         UserResponse userResponse = new UserResponse();
@@ -90,7 +91,7 @@ public class UserService {
     public UserResponse updateUser(Long id, CreateUserRequest request){
         User user = userRepository.findUserById(id);
         if(user==null){
-            throw new RuntimeException("User doesn't exist");
+            throw new UserNotFoundException("User doesn't exist");
         }
 
 
@@ -115,7 +116,7 @@ public class UserService {
     public void deleteUserById(Long id){
         User user = userRepository.findUserById(id);
         if (user==null){
-            throw new RuntimeException("User doesn't exist");
+            throw new UserNotFoundException("User doesn't exist");
         }
 
         userRepository.delete(user);
