@@ -2,6 +2,7 @@ package com.BankingSystem.Banking_System.service;
 
 import com.BankingSystem.Banking_System.dto.CreateUserRequest;
 import com.BankingSystem.Banking_System.dto.UserResponse;
+import com.BankingSystem.Banking_System.exception.DuplicateEmailException;
 import com.BankingSystem.Banking_System.exception.UserNotFoundException;
 import com.BankingSystem.Banking_System.repository.UserRepository;
 import com.BankingSystem.Banking_System.entity.User;
@@ -21,7 +22,7 @@ public class UserService {
 
     public UserResponse createUser(CreateUserRequest request){
         if(userRepository.existsByEmail(request.getEmail())){
-            throw new RuntimeException("Email already Exist");
+            throw new DuplicateEmailException("Email Already Exist");
         }
 
         User user = new User();
