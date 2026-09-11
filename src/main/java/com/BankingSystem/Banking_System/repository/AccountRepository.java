@@ -9,7 +9,7 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     Optional<Account> findByAccountNumber(String accNum);
 
-    boolean existByAccountNumber(String accNum);
+    boolean existsByAccountNumber(String accNum);
 
 
 }
