@@ -123,5 +123,15 @@ public class AccountService {
             return accountResponse;
         }).toList();
     }
+
+    public void deleteAccount(String accountNumber) {
+        Account account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found"));
+
+        if (account.getBalance().compareTo(BigDecimal.ZERO) != 0) {
+            throw new IllegalStateException("Cannot delete account with non-zero balance");
+        }
+        accountRepository.delete(account);
+    }
 }
 

@@ -5,6 +5,7 @@ import com.BankingSystem.Banking_System.dto.AccountResponse;
 import com.BankingSystem.Banking_System.dto.CreateAccountRequest;
 import com.BankingSystem.Banking_System.service.AccountService;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public class AccountController {
         return accountService.getAccountById(id);
     }
 
-    @GetMapping("/accounts/{accountNumber}")
+    @GetMapping("/{accountNumber}")
     public AccountResponse getAccountByAccountNumber(@PathVariable String accountNumber) {
         return accountService.getAccountByAccountNumber(accountNumber);
     }
@@ -37,5 +38,11 @@ public class AccountController {
     @GetMapping
     public List<AccountResponse> getAllAccounts() {
         return accountService.getAllAccounts();
+    }
+
+    @DeleteMapping("/{accountNumber}")
+    public ResponseEntity<Void> deleteAccount(@PathVariable String accountNumber) {
+        accountService.deleteAccount(accountNumber);
+        return ResponseEntity.noContent().build();
     }
 }
