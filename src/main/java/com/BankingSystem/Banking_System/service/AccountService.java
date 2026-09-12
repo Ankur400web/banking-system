@@ -56,11 +56,20 @@ public class AccountService {
 
     }
 
-    private String generateAccountNumber() {
-        Random random = new Random();
+        private String generateAccountNumber() {
 
-        long number = 1000000000L + random.nextLong(900000000L);
 
-        return String.valueOf(number);
-    }
+
+            Random random = new Random();
+
+            long number = 1000000000L + random.nextLong(900000000L);
+
+            String accountNumber = String.valueOf(number);
+
+            if (accountRepository.existsByAccountNumber(String.valueOf(accountNumber))) {
+                return generateAccountNumber();
+            }
+
+            return accountNumber    ;
+        }
 }
