@@ -7,6 +7,8 @@ import com.BankingSystem.Banking_System.service.AccountService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RequestMapping("api/accounts")
 @RestController
 public class AccountController {
@@ -27,8 +29,13 @@ public class AccountController {
         return accountService.getAccountById(id);
     }
 
-    @GetMapping("/accountNumber/{accountNumber}")
+    @GetMapping("/accounts/{accountNumber}")
     public AccountResponse getAccountByAccountNumber(@PathVariable String accountNumber) {
         return accountService.getAccountByAccountNumber(accountNumber);
+    }
+
+    @GetMapping
+    public List<AccountResponse> getAllAccounts() {
+        return accountService.getAllAccounts();
     }
 }

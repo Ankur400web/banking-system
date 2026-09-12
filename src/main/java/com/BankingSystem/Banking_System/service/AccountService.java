@@ -11,6 +11,7 @@ import com.BankingSystem.Banking_System.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Random;
 
 
@@ -105,6 +106,22 @@ public class AccountService {
         accountResponse.setUserId(account.getUser().getId());
 
         return accountResponse;
+    }
+
+    public List<AccountResponse> getAllAccounts(){
+
+        List<Account> accounts = accountRepository.findAll();
+
+        return accounts.stream().map(account -> {
+            AccountResponse accountResponse = new AccountResponse();
+            accountResponse.setId(account.getId());
+            accountResponse.setAccountNumber(account.getAccountNumber());
+            accountResponse.setAccountType(account.getAccountType());
+            accountResponse.setBalance(account.getBalance());
+            accountResponse.setCreatedAt(account.getCreatedAt());
+            accountResponse.setUserId(account.getUser().getId());
+            return accountResponse;
+        }).toList();
     }
 }
 
