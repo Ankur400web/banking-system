@@ -2,6 +2,7 @@ package com.BankingSystem.Banking_System.exception;
 
 
 
+import com.BankingSystem.Banking_System.dto.AccountResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import com.BankingSystem.Banking_System.dto.ErrorResponse;
@@ -19,7 +20,7 @@ public class GlobalExceptionHandler {
 
 
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handlerNotFound(UserNotFoundException userNotFoundException){
+    public ResponseEntity<ErrorResponse> handlerUserNotFound(UserNotFoundException userNotFoundException){
 
         ErrorResponse errorResponse = new ErrorResponse();
 
@@ -71,4 +72,18 @@ public class GlobalExceptionHandler {
                 .body(errorResponse);
     }
 
+
+    @ExceptionHandler(AccountNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAccountNotFound(AccountNotFoundException exception){
+
+        ErrorResponse errorResponse = new ErrorResponse();
+
+        errorResponse.setStatus(HttpStatus.NOT_FOUND.value());
+        errorResponse.setMessage(exception.getMessage());
+        errorResponse.setTimestamp(LocalDateTime.now());
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(errorResponse);
+    }
 }

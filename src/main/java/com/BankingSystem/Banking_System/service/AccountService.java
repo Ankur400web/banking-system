@@ -4,6 +4,7 @@ import com.BankingSystem.Banking_System.dto.AccountResponse;
 import com.BankingSystem.Banking_System.dto.CreateAccountRequest;
 import com.BankingSystem.Banking_System.entity.Account;
 import com.BankingSystem.Banking_System.entity.User;
+import com.BankingSystem.Banking_System.exception.AccountNotFoundException;
 import com.BankingSystem.Banking_System.exception.UserNotFoundException;
 import com.BankingSystem.Banking_System.repository.AccountRepository;
 import com.BankingSystem.Banking_System.repository.UserRepository;
@@ -56,20 +57,54 @@ public class AccountService {
 
     }
 
-        private String generateAccountNumber() {
+    private String generateAccountNumber() {
 
 
 
-            Random random = new Random();
+        Random random = new Random();
 
-            long number = 1000000000L + random.nextLong(900000000L);
+        long number = 1000000000L + random.nextLong(900000000L);
 
-            String accountNumber = String.valueOf(number);
+        String accountNumber = String.valueOf(number);
 
-            if (accountRepository.existsByAccountNumber(String.valueOf(accountNumber))) {
-                return generateAccountNumber();
-            }
-
-            return accountNumber    ;
+        if (accountRepository.existsByAccountNumber(String.valueOf(accountNumber))) {
+            return generateAccountNumber();
         }
+
+        return accountNumber    ;
+    }
+
+
+    public AccountResponse getAccountById(Long accId){
+        Account account = accountRepository.findById(accId)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found"));
+
+        AccountResponse accountResponse = new AccountResponse();
+
+        accountResponse.setId(account.getId());
+        accountResponse.setAccountNumber(account.getAccountNumber());
+        accountResponse.setAccountType(account.getAccountType());
+        accountResponse.setBalance(account.getBalance());
+        accountResponse.setCreatedAt(account.getCreatedAt());
+        accountResponse.setUserId(account.getUser().getId());
+
+        return accountResponse;
+    }
+
+    public AccountResponse getAccountByAccountNumber(String accountNumber) {
+        Account account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found"));
+
+        AccountResponse accountResponse = new AccountResponse();
+
+        accountResponse.setId(account.getId());
+        accountResponse.setAccountNumber(account.getAccountNumber());
+        accountResponse.setAccountType(account.getAccountType());
+        accountResponse.setBalance(account.getBalance());
+        accountResponse.setCreatedAt(account.getCreatedAt());
+        accountResponse.setUserId(account.getUser().getId());
+
+        return accountResponse;
+    }
 }
+
