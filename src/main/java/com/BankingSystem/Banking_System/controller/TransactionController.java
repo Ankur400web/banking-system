@@ -2,6 +2,7 @@ package com.BankingSystem.Banking_System.controller;
 
 import com.BankingSystem.Banking_System.dto.DepositRequest;
 import com.BankingSystem.Banking_System.dto.TransactionResponse;
+import com.BankingSystem.Banking_System.dto.WithdrawRequest;
 import com.BankingSystem.Banking_System.service.TransactionService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,5 +23,10 @@ public class TransactionController {
     @PostMapping("/deposit")
     public TransactionResponse deposit(@Valid @RequestBody DepositRequest depositRequest){
         return transactionService.deposit(depositRequest);
+    }
+
+    @PostMapping("/withdraw")
+    public TransactionResponse withdraw(@Valid @RequestBody WithdrawRequest request){
+        return transactionService.withDraw(request);
     }
 }
