@@ -14,6 +14,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class TransactionService {
@@ -95,5 +97,28 @@ public class TransactionService {
         return response;
 
 
+    }
+
+    public List<TransactionResponse> transactionHistory(String accNum){
+        Account account = accountRepository.findByAccountNumber(accNum)
+                .orElseThrow(()-> new AccountNotFoundException("Account doesn't exist"));
+
+        List<Transaction> transactions = transactionRepository.findAllByAccount(account);
+
+        List<TransactionResponse> responses = new ArrayList<>();
+
+        for (Transaction transaction: transactions){
+
+                TransactionResponse response = new TransactionResponse();
+                response.setId(transaction.getId());
+                response.setAccountNumber(account.getAccountNumber());
+                response.setType(transaction.getType());
+                response.setAmount(transaction.getAmount());
+                response.setBalanceAfter(transaction.getBalanceAfter());
+                response.setCreatedAt(transaction.getCreatedAt());
+
+                responses.add(response);
+        }
+        return responses;
     }
 }
