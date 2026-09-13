@@ -1,0 +1,60 @@
+package com.BankingSystem.Banking_System.service;
+
+import com.BankingSystem.Banking_System.dto.DepositRequest;
+import com.BankingSystem.Banking_System.dto.TransactionResponse;
+import com.BankingSystem.Banking_System.entity.Account;
+import com.BankingSystem.Banking_System.entity.Transaction;
+import com.BankingSystem.Banking_System.enums.TransactionTypes;
+import com.BankingSystem.Banking_System.exception.AccountNotFoundException;
+import com.BankingSystem.Banking_System.repository.AccountRepository;
+import com.BankingSystem.Banking_System.repository.TransactionRepository;
+import jakarta.transaction.Transactional;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+
+@Service
+public class TransactionService {
+
+    private final TransactionRepository transactionRepository;
+    private final AccountRepository accountRepository;
+
+    public TransactionService(TransactionRepository transactionRepository, AccountRepository accountRepository){
+        this.transactionRepository = transactionRepository;
+        this.accountRepository = accountRepository;
+    }
+
+    @Transactional
+    public TransactionResponse deposit(DepositRequest deposit){
+        Account account = accountRepository.findByAccountNumber(deposit.getAccountNumber())
+                .orElseThrow(()-> new AccountNotFoundException("Account not found"));
+
+
+        BigDecimal newBalance = account.getBalance().add(deposit.getAmount());
+
+        account.setBalance(newBalance);
+
+        Transaction transaction = new Transaction();
+
+        transaction.setType(TransactionTypes.DEPOSIT);
+        transaction.setAmount(deposit.getAmount());
+        transaction.setBalanceAfter(newBalance);
+        transaction.setAccount(account);
+
+        accountRepository.save(account);
+        transactionRepository.save(transaction);
+
+        TransactionResponse response = new TransactionResponse();
+
+        response.setId(transaction.getId());
+        response.setAccountNumber(account.getAccountNumber());
+        response.setType(transaction.getType());
+        response.setAmount(transaction.getAmount());
+        response.setBalanceAfter(transaction.getBalanceAfter());
+        response.setCreatedAt(transaction.getCreatedAt());
+
+        return response;
+
+
+    }
+}
