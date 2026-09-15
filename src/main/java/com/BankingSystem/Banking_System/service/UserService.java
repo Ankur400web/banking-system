@@ -1,12 +1,17 @@
 package com.BankingSystem.Banking_System.service;
 
 import com.BankingSystem.Banking_System.dto.CreateUserRequest;
+import com.BankingSystem.Banking_System.dto.LoginRequest;
 import com.BankingSystem.Banking_System.dto.UserResponse;
 import com.BankingSystem.Banking_System.exception.DuplicateEmailException;
+import com.BankingSystem.Banking_System.exception.InvalidCredentialsException;
 import com.BankingSystem.Banking_System.exception.UserNotFoundException;
 import com.BankingSystem.Banking_System.repository.UserRepository;
 import com.BankingSystem.Banking_System.entity.User;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+
 
 
 import java.util.ArrayList;
@@ -16,9 +21,13 @@ import java.util.List;
 public class UserService {
     private final UserRepository userRepository;
 
-    public UserService(UserRepository userRepository) {
+    private final PasswordEncoder passwordEncoder;
+
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
+
 
     public UserResponse createUser(CreateUserRequest request){
         if(userRepository.existsByEmail(request.getEmail())){
@@ -30,7 +39,7 @@ public class UserService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         User savedUser = userRepository.save(user);
 
@@ -123,5 +132,23 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    public void extraUnUsedFunc(){}
+    public UserResponse userLogin(LoginRequest request){
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(()-> new InvalidCredentialsException("Invalid email or password"));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())){
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
+
+
+        UserResponse response = new UserResponse();
+
+        response.setId(user.getId());
+        response.setFirstName(user.getFirstName());
+        response.setLastName(user.getLastName());
+        response.setEmail(user.getEmail());
+        response.setCreatedAt(user.getCreatedAt());
+
+        return response;
+    }
 }
