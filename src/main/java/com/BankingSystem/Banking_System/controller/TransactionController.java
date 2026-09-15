@@ -2,6 +2,7 @@ package com.BankingSystem.Banking_System.controller;
 
 import com.BankingSystem.Banking_System.dto.DepositRequest;
 import com.BankingSystem.Banking_System.dto.TransactionResponse;
+import com.BankingSystem.Banking_System.dto.TransferRequest;
 import com.BankingSystem.Banking_System.dto.WithdrawRequest;
 import com.BankingSystem.Banking_System.service.TransactionService;
 import jakarta.validation.Valid;
@@ -34,5 +35,10 @@ public class TransactionController {
             @PathVariable String accountNumber) {
 
         return transactionService.transactionHistory(accountNumber);
+    }
+
+    @PostMapping("/transfer")
+    public List<TransactionResponse> transfer(@RequestBody TransferRequest request){
+        return transactionService.transfer(request);
     }
 }
