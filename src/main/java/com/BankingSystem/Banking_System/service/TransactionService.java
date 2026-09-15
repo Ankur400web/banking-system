@@ -2,12 +2,14 @@ package com.BankingSystem.Banking_System.service;
 
 import com.BankingSystem.Banking_System.dto.DepositRequest;
 import com.BankingSystem.Banking_System.dto.TransactionResponse;
+import com.BankingSystem.Banking_System.dto.TransferRequest;
 import com.BankingSystem.Banking_System.dto.WithdrawRequest;
 import com.BankingSystem.Banking_System.entity.Account;
 import com.BankingSystem.Banking_System.entity.Transaction;
 import com.BankingSystem.Banking_System.enums.TransactionTypes;
 import com.BankingSystem.Banking_System.exception.AccountNotFoundException;
 import com.BankingSystem.Banking_System.exception.InsufficientBalanceException;
+import com.BankingSystem.Banking_System.exception.SameAccountException;
 import com.BankingSystem.Banking_System.repository.AccountRepository;
 import com.BankingSystem.Banking_System.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
@@ -120,5 +122,72 @@ public class TransactionService {
                 responses.add(response);
         }
         return responses;
+    }
+
+    @Transactional
+    public List<TransactionResponse> transfer(TransferRequest request){
+        Account fromAccount = accountRepository.findByAccountNumber(request.getFromAccountNumber())
+                .orElseThrow(()-> new AccountNotFoundException("Source account doesn't exist"));
+        
+        Account toAccount = accountRepository.findByAccountNumber(request.getToAccountNumber())
+                .orElseThrow(()-> new AccountNotFoundException("Destination account not found"));
+        
+        if (fromAccount.getAccountNumber().equals(toAccount.getAccountNumber())){
+            throw new SameAccountException("Cannot not transfer to same account");
+        } else if (request.getAmount().compareTo(fromAccount.getBalance())>0) {
+            throw new InsufficientBalanceException("Insufficient funds to transfer");
+        }
+
+        BigDecimal newFromBalance = fromAccount.getBalance().subtract(request.getAmount());
+
+        BigDecimal newToBalance = toAccount.getBalance().add(request.getAmount());
+
+        fromAccount.setBalance(newFromBalance);
+
+        toAccount.setBalance(newToBalance);
+
+        accountRepository.save(fromAccount);
+        accountRepository.save(toAccount);
+
+        Transaction fromTransaction = new Transaction();
+
+        fromTransaction.setType(TransactionTypes.WITHDRAWAL);
+        fromTransaction.setAmount(request.getAmount());
+        fromTransaction.setBalanceAfter(newFromBalance);
+        fromTransaction.setAccount(fromAccount);
+
+        Transaction toTransaction = new Transaction();
+
+        toTransaction.setType(TransactionTypes.DEPOSIT);
+        toTransaction.setAmount(request.getAmount());
+        toTransaction.setBalanceAfter(newToBalance);
+        toTransaction.setAccount(toAccount);
+
+        transactionRepository.save(fromTransaction);
+        transactionRepository.save(toTransaction);
+
+        TransactionResponse fromResponse = new TransactionResponse();
+        fromResponse.setId(fromTransaction.getId());
+        fromResponse.setAccountNumber(fromAccount.getAccountNumber());
+        fromResponse.setType(fromTransaction.getType());
+        fromResponse.setAmount(fromTransaction.getAmount());
+        fromResponse.setBalanceAfter(fromTransaction.getBalanceAfter());
+        fromResponse.setCreatedAt(fromTransaction.getCreatedAt());
+
+        TransactionResponse toResponse = new TransactionResponse();
+        toResponse.setId(toTransaction.getId());
+        toResponse.setAccountNumber(toAccount.getAccountNumber());
+        toResponse.setType(toTransaction.getType());
+        toResponse.setAmount(toTransaction.getAmount());
+        toResponse.setBalanceAfter(toTransaction.getBalanceAfter());
+        toResponse.setCreatedAt(toTransaction.getCreatedAt());
+
+        List<TransactionResponse> responses = new ArrayList<>();
+        responses.add(fromResponse);
+        responses.add(toResponse);
+
+        return responses;
+
+
     }
 }
