@@ -2,6 +2,7 @@ package com.BankingSystem.Banking_System.service;
 
 import com.BankingSystem.Banking_System.dto.CreateUserRequest;
 import com.BankingSystem.Banking_System.dto.LoginRequest;
+import com.BankingSystem.Banking_System.dto.LoginResponse;
 import com.BankingSystem.Banking_System.dto.UserResponse;
 import com.BankingSystem.Banking_System.exception.DuplicateEmailException;
 import com.BankingSystem.Banking_System.exception.InvalidCredentialsException;
@@ -23,10 +24,14 @@ public class UserService {
 
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    private final JwtService jwtService;
+
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
+
 
 
     public UserResponse createUser(CreateUserRequest request){
@@ -39,7 +44,7 @@ public class UserService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         User savedUser = userRepository.save(user);
 
@@ -132,7 +137,7 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    public UserResponse userLogin(LoginRequest request){
+    public LoginResponse userLogin(LoginRequest request){
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(()-> new InvalidCredentialsException("Invalid email or password"));
 
@@ -141,14 +146,17 @@ public class UserService {
         }
 
 
-        UserResponse response = new UserResponse();
 
-        response.setId(user.getId());
-        response.setFirstName(user.getFirstName());
-        response.setLastName(user.getLastName());
-        response.setEmail(user.getEmail());
-        response.setCreatedAt(user.getCreatedAt());
+
+        LoginResponse response = new LoginResponse();
+
+        String token = jwtService.generateToken(user);
+
+        response.setToken(token);
+        response.setTokenType("Bearer");
 
         return response;
+
+
     }
 }
