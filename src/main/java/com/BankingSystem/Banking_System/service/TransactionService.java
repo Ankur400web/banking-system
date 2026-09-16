@@ -6,13 +6,17 @@ import com.BankingSystem.Banking_System.dto.TransferRequest;
 import com.BankingSystem.Banking_System.dto.WithdrawRequest;
 import com.BankingSystem.Banking_System.entity.Account;
 import com.BankingSystem.Banking_System.entity.Transaction;
+import com.BankingSystem.Banking_System.entity.User;
 import com.BankingSystem.Banking_System.enums.TransactionTypes;
 import com.BankingSystem.Banking_System.exception.AccountNotFoundException;
 import com.BankingSystem.Banking_System.exception.InsufficientBalanceException;
 import com.BankingSystem.Banking_System.exception.SameAccountException;
+import com.BankingSystem.Banking_System.exception.UnauthorizedAccountAccessException;
 import com.BankingSystem.Banking_System.repository.AccountRepository;
 import com.BankingSystem.Banking_System.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -34,6 +38,17 @@ public class TransactionService {
     public TransactionResponse deposit(DepositRequest deposit){
         Account account = accountRepository.findByAccountNumber(deposit.getAccountNumber())
                 .orElseThrow(()-> new AccountNotFoundException("Account not found"));
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        User user = (User) authentication.getPrincipal();
+
+        if (!account.getUser().getId().equals(user.getId())) {
+            throw new UnauthorizedAccountAccessException(
+                    "You are not authorized to access this account"
+            );
+        }
 
 
         BigDecimal newBalance = account.getBalance().add(deposit.getAmount());
@@ -68,6 +83,14 @@ public class TransactionService {
     public TransactionResponse withDraw(WithdrawRequest request){
         Account account = accountRepository.findByAccountNumber(request.getAccountNumber())
                 .orElseThrow(()-> new AccountNotFoundException("Account Not found"));
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        User user = (User) authentication.getPrincipal();
+
+        if (!account.getUser().getId().equals(user.getId())){
+            throw new UnauthorizedAccountAccessException("You are not authorized to this account.");
+        }
 
         if (request.getAmount().compareTo(account.getBalance())>0){
             throw new InsufficientBalanceException("Insufficient balance");
