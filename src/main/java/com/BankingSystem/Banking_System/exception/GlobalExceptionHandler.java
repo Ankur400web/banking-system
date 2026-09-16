@@ -112,4 +112,19 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(errorResponse);
     }
+
+    @ExceptionHandler(UnauthorizedAccountAccessException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorizedAccountAccess(
+            UnauthorizedAccountAccessException exception) {
+
+        ErrorResponse errorResponse = new ErrorResponse();
+
+        errorResponse.setStatus(HttpStatus.FORBIDDEN.value());
+        errorResponse.setMessage(exception.getMessage());
+        errorResponse.setTimestamp(LocalDateTime.now());
+
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(errorResponse);
+    }
 }

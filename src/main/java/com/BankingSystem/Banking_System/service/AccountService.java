@@ -5,9 +5,12 @@ import com.BankingSystem.Banking_System.dto.CreateAccountRequest;
 import com.BankingSystem.Banking_System.entity.Account;
 import com.BankingSystem.Banking_System.entity.User;
 import com.BankingSystem.Banking_System.exception.AccountNotFoundException;
+import com.BankingSystem.Banking_System.exception.UnauthorizedAccountAccessException;
 import com.BankingSystem.Banking_System.exception.UserNotFoundException;
 import com.BankingSystem.Banking_System.repository.AccountRepository;
 import com.BankingSystem.Banking_System.repository.UserRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -92,9 +95,20 @@ public class AccountService {
         return accountResponse;
     }
 
-    public AccountResponse getAccountByAccountNumber(String accountNumber) {
+    public AccountResponse getAccountByAccountNumber(String accountNumber){
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found"));
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        User user = (User) authentication.getPrincipal();
+
+        if (!account.getUser().getId().equals(user.getId())) {
+            throw new UnauthorizedAccountAccessException(
+                    "You are not authorized to access this account"
+            );
+        }
 
         AccountResponse accountResponse = new AccountResponse();
 
