@@ -151,12 +151,20 @@ public class TransactionService {
     public List<TransactionResponse> transfer(TransferRequest request){
         Account fromAccount = accountRepository.findByAccountNumber(request.getFromAccountNumber())
                 .orElseThrow(()-> new AccountNotFoundException("Source account doesn't exist"));
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        User user = (User) authentication.getPrincipal();
+
+        if (!fromAccount.getUser().getId().equals(user.getId())){
+            throw new UnauthorizedAccountAccessException("You are not authorized to transfer money");
+        }
         
         Account toAccount = accountRepository.findByAccountNumber(request.getToAccountNumber())
                 .orElseThrow(()-> new AccountNotFoundException("Destination account not found"));
         
         if (fromAccount.getAccountNumber().equals(toAccount.getAccountNumber())){
-            throw new SameAccountException("Cannot not transfer to same account");
+            throw new SameAccountException("Cannot transfer to same account");
         } else if (request.getAmount().compareTo(fromAccount.getBalance())>0) {
             throw new InsufficientBalanceException("Insufficient funds to transfer");
         }
