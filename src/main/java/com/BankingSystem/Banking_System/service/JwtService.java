@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Service
-class JwtService {
+public class JwtService {
 
 
     @Value("${jwt.secret}")
@@ -35,6 +35,34 @@ class JwtService {
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public String extractUsername(String token){
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
+    }
+
+    private boolean isTokenExpired(String token) {
+
+        Date expirationDate = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getExpiration();
+
+        return expirationDate.before(new Date());
+    }
+
+    public boolean isTokenValid(String token, User user){
+        String username = extractUsername(token);
+
+        return username.equals(user.getEmail())
+                && !isTokenExpired(token);
     }
 
 
