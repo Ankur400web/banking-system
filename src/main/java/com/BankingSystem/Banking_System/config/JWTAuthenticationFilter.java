@@ -55,6 +55,8 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
             // 4. Extract email from JWT
             String username = jwtService.extractUsername(token);
 
+            System.out.println("JWT username: " + username);
+
             // 5. Don't authenticate if authentication already exists
             if (username != null &&
                     SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -83,6 +85,9 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                     // 10. Store authentication in SecurityContext
                     SecurityContextHolder.getContext()
                             .setAuthentication(authentication);
+
+                    System.out.println("Authenticated user: " +
+                            authentication.getPrincipal());
                 }
             }
 

@@ -83,6 +83,14 @@ public class AccountService {
         Account account = accountRepository.findById(accId)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found"));
 
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        User user = (User) authentication.getPrincipal();
+
+        if(!account.getUser().getId().equals(user.getId())){
+            throw new UnauthorizedAccountAccessException("You are not authorized to do this");
+        }
+
         AccountResponse accountResponse = new AccountResponse();
 
         accountResponse.setId(account.getId());

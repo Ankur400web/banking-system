@@ -6,9 +6,12 @@ import com.BankingSystem.Banking_System.dto.LoginResponse;
 import com.BankingSystem.Banking_System.dto.UserResponse;
 import com.BankingSystem.Banking_System.exception.DuplicateEmailException;
 import com.BankingSystem.Banking_System.exception.InvalidCredentialsException;
+import com.BankingSystem.Banking_System.exception.UnauthorizedAccountAccessException;
 import com.BankingSystem.Banking_System.exception.UserNotFoundException;
 import com.BankingSystem.Banking_System.repository.UserRepository;
 import com.BankingSystem.Banking_System.entity.User;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -86,11 +89,18 @@ public class UserService {
 
     public UserResponse getUserById(Long id) {
 
-        User user = userRepository.findUserById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() ->
+                        new UserNotFoundException("User doesn't exist"));
 
-        if (user == null) {
-            throw new UserNotFoundException("User doesn't exist");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        User authenticatedUser = (User) authentication.getPrincipal();
+
+        if (!authenticatedUser.getId().equals(id)){
+            throw new UnauthorizedAccountAccessException("You are not authorized");
         }
+
 
         UserResponse userResponse = new UserResponse();
 
