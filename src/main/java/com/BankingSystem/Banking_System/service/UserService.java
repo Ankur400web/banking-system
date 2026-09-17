@@ -114,11 +114,16 @@ public class UserService {
     }
 
     public UserResponse updateUser(Long id, CreateUserRequest request){
-        User user = userRepository.findUserById(id);
-        if(user==null){
-            throw new UserNotFoundException("User doesn't exist");
-        }
+        User user = userRepository.findById(id)
+            .orElseThrow(()-> new UserNotFoundException("User doesn't exist"));
 
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        User authenticatedUser = (User) authentication.getPrincipal();
+
+        if (!authenticatedUser.getId().equals(id)){
+            throw new UnauthorizedAccountAccessException("You are not authorized to modify other users");
+        }
 
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
