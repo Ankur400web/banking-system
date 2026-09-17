@@ -1,13 +1,8 @@
 package com.BankingSystem.Banking_System.service;
 
-import com.BankingSystem.Banking_System.dto.CreateUserRequest;
-import com.BankingSystem.Banking_System.dto.LoginRequest;
-import com.BankingSystem.Banking_System.dto.LoginResponse;
-import com.BankingSystem.Banking_System.dto.UserResponse;
-import com.BankingSystem.Banking_System.exception.DuplicateEmailException;
-import com.BankingSystem.Banking_System.exception.InvalidCredentialsException;
-import com.BankingSystem.Banking_System.exception.UnauthorizedAccountAccessException;
-import com.BankingSystem.Banking_System.exception.UserNotFoundException;
+import com.BankingSystem.Banking_System.dto.*;
+import com.BankingSystem.Banking_System.exception.*;
+import com.BankingSystem.Banking_System.repository.AccountRepository;
 import com.BankingSystem.Banking_System.repository.UserRepository;
 import com.BankingSystem.Banking_System.entity.User;
 import org.springframework.security.core.Authentication;
@@ -29,10 +24,13 @@ public class UserService {
 
     private final JwtService jwtService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    private final AccountRepository accountRepository;
+
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, AccountRepository accountRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.accountRepository = accountRepository;
     }
 
 
@@ -113,7 +111,7 @@ public class UserService {
         return userResponse;
     }
 
-    public UserResponse updateUser(Long id, CreateUserRequest request){
+    public UserResponse updateUser(Long id, UpdateUserRequest request){
         User user = userRepository.findById(id)
             .orElseThrow(()-> new UserNotFoundException("User doesn't exist"));
 
@@ -144,9 +142,22 @@ public class UserService {
     }
 
     public void deleteUserById(Long id){
-        User user = userRepository.findUserById(id);
-        if (user==null){
-            throw new UserNotFoundException("User doesn't exist");
+
+        User user = userRepository.findById(id)
+                        .orElseThrow(()-> new UserNotFoundException("User doesn't exist"));
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        User authenticatedUser = (User) authentication.getPrincipal();
+
+        if (!authenticatedUser.getId().equals(id)){
+            throw new UnauthorizedAccountAccessException("You are not authorized to delete user");
+        }
+
+        if (accountRepository.existsByUser(user)) {
+            throw new UserHasException(
+                    "Cannot delete user while accounts exist"
+            );
         }
 
         userRepository.delete(user);

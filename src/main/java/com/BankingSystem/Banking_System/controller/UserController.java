@@ -1,6 +1,7 @@
 package com.BankingSystem.Banking_System.controller;
 
 import com.BankingSystem.Banking_System.dto.CreateUserRequest;
+import com.BankingSystem.Banking_System.dto.UpdateUserRequest;
 import com.BankingSystem.Banking_System.dto.UserResponse;
 import com.BankingSystem.Banking_System.service.UserService;
 import jakarta.validation.Valid;
@@ -31,7 +32,7 @@ public class UserController {
     public UserResponse getUserById(@PathVariable Long id){return userService.getUserById(id);}
 
     @PutMapping("/{id}")
-    public UserResponse updateUserById(@PathVariable Long id, @RequestBody CreateUserRequest request){return userService.updateUser(id, request);}
+    public UserResponse updateUserById(@PathVariable Long id, @RequestBody UpdateUserRequest request){return userService.updateUser(id, request);}
 
     @DeleteMapping("/{id}")
     public void deleteUserById(@PathVariable Long id){userService.deleteUserById(id);}
