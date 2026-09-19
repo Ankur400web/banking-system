@@ -1,10 +1,12 @@
 package com.BankingSystem.Banking_System.controller;
 
+import com.BankingSystem.Banking_System.dto.ChangePasswordRequest;
 import com.BankingSystem.Banking_System.dto.CreateUserRequest;
 import com.BankingSystem.Banking_System.dto.UpdateUserRequest;
 import com.BankingSystem.Banking_System.dto.UserResponse;
 import com.BankingSystem.Banking_System.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,6 +38,15 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     public void deleteUserById(@PathVariable Long id){userService.deleteUserById(id);}
+
+    @PutMapping("/password")
+    public ResponseEntity<Void> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request) {
+
+        userService.changePassword(request);
+
+        return ResponseEntity.noContent().build();
+    }
 
 
 }
