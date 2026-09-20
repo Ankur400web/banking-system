@@ -4,6 +4,7 @@ package com.BankingSystem.Banking_System.controller;
 import com.BankingSystem.Banking_System.dto.LoginRequest;
 import com.BankingSystem.Banking_System.dto.LoginResponse;
 import com.BankingSystem.Banking_System.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,6 +27,10 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(
+            summary = "User login",
+            description = "Authenticates a user and returns a JWT access token"
+    )
     public LoginResponse userLogin(@Valid @RequestBody LoginRequest request){
         return userService.userLogin(request);
     }
