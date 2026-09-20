@@ -30,8 +30,8 @@ public class UserController {
     }
 
     @PostMapping
-    @Tag(
-            name = "Create User",
+    @Operation(
+            summary = "Create User",
             description = "Create user by taking input of firstName, lastName, email and password and autogenerate id and add creation time"
     )
     public UserResponse createUser(@RequestBody @Valid CreateUserRequest request){
