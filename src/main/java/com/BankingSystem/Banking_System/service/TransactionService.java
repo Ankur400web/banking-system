@@ -36,7 +36,7 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponse deposit(DepositRequest deposit){
-        Account account = accountRepository.findByAccountNumber(deposit.getAccountNumber())
+        Account account = accountRepository.findByAccountNumberForUpdate(deposit.getAccountNumber())
                 .orElseThrow(()-> new AccountNotFoundException("Account not found"));
 
         Authentication authentication =
@@ -81,7 +81,7 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponse withDraw(WithdrawRequest request){
-        Account account = accountRepository.findByAccountNumber(request.getAccountNumber())
+        Account account = accountRepository.findByAccountNumberForUpdate(request.getAccountNumber())
                 .orElseThrow(()-> new AccountNotFoundException("Account Not found"));
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -128,6 +128,14 @@ public class TransactionService {
         Account account = accountRepository.findByAccountNumber(accNum)
                 .orElseThrow(()-> new AccountNotFoundException("Account doesn't exist"));
 
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        User authenticatedUser = (User) authentication.getPrincipal();
+
+        if (!account.getUser().getId().equals(authenticatedUser.getId())){
+            throw new UnauthorizedAccountAccessException("You are not authorized to check transaction history");
+        }
+
         List<Transaction> transactions = transactionRepository.findAllByAccount(account);
 
         List<TransactionResponse> responses = new ArrayList<>();
@@ -149,7 +157,7 @@ public class TransactionService {
 
     @Transactional
     public List<TransactionResponse> transfer(TransferRequest request){
-        Account fromAccount = accountRepository.findByAccountNumber(request.getFromAccountNumber())
+        Account fromAccount = accountRepository.findByAccountNumberForUpdate(request.getFromAccountNumber())
                 .orElseThrow(()-> new AccountNotFoundException("Source account doesn't exist"));
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -160,7 +168,7 @@ public class TransactionService {
             throw new UnauthorizedAccountAccessException("You are not authorized to transfer money");
         }
         
-        Account toAccount = accountRepository.findByAccountNumber(request.getToAccountNumber())
+        Account toAccount = accountRepository.findByAccountNumberForUpdate(request.getToAccountNumber())
                 .orElseThrow(()-> new AccountNotFoundException("Destination account not found"));
         
         if (fromAccount.getAccountNumber().equals(toAccount.getAccountNumber())){
