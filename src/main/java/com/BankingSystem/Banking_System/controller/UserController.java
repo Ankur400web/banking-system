@@ -5,6 +5,7 @@ import com.BankingSystem.Banking_System.dto.CreateUserRequest;
 import com.BankingSystem.Banking_System.dto.UpdateUserRequest;
 import com.BankingSystem.Banking_System.dto.UserResponse;
 import com.BankingSystem.Banking_System.service.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 
+@Tag(
+        name = "Users",
+        description = "User registration, profile management and password operations"
+)
 @RequestMapping("/api/users")
 @RestController
 public class UserController {

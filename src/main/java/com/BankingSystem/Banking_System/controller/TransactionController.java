@@ -5,6 +5,7 @@ import com.BankingSystem.Banking_System.dto.TransactionResponse;
 import com.BankingSystem.Banking_System.dto.TransferRequest;
 import com.BankingSystem.Banking_System.dto.WithdrawRequest;
 import com.BankingSystem.Banking_System.service.TransactionService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,6 +13,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/transaction")
+@Tag(
+        name = "Transactions",
+        description = "Deposits, withdrawals, transfers and transaction history"
+)
 public class TransactionController {
 
     private final TransactionService transactionService;

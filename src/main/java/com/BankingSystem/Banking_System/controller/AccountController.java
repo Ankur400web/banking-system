@@ -4,6 +4,7 @@ package com.BankingSystem.Banking_System.controller;
 import com.BankingSystem.Banking_System.dto.AccountResponse;
 import com.BankingSystem.Banking_System.dto.CreateAccountRequest;
 import com.BankingSystem.Banking_System.service.AccountService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,10 @@ import java.util.List;
 
 @RequestMapping("api/accounts")
 @RestController
+@Tag(
+        name = "Accounts",
+        description = "Account creation, retrieval and management"
+)
 public class AccountController {
 
     private final AccountService accountService;
