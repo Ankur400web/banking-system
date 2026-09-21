@@ -1,11 +1,9 @@
 package com.BankingSystem.Banking_System.service;
 
-import com.BankingSystem.Banking_System.dto.ChangePasswordRequest;
-import com.BankingSystem.Banking_System.dto.CreateUserRequest;
-import com.BankingSystem.Banking_System.dto.UpdateUserRequest;
-import com.BankingSystem.Banking_System.dto.UserResponse;
+import com.BankingSystem.Banking_System.dto.*;
 import com.BankingSystem.Banking_System.entity.User;
 import com.BankingSystem.Banking_System.exception.DuplicateEmailException;
+import com.BankingSystem.Banking_System.exception.InvalidCredentialsException;
 import com.BankingSystem.Banking_System.exception.InvalidPasswordException;
 import com.BankingSystem.Banking_System.exception.UserNotFoundException;
 import com.BankingSystem.Banking_System.repository.AccountRepository;
@@ -36,6 +34,9 @@ public class UserServiceTest {
 
     @Mock
     private AccountRepository accountRepository;
+
+    @Mock
+    private JwtService jwtService;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -416,6 +417,96 @@ public class UserServiceTest {
 
         verify(passwordEncoder, never()).encode(anyString());
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void userLogin_shouldReturnTokenSuccessfully() {
+
+        User user = new User();
+        user.setId(1L);
+        user.setEmail("ankur@example.com");
+        user.setPassword("encodedPassword");
+
+        LoginRequest request = new LoginRequest();
+        request.setEmail("ankur@example.com");
+        request.setPassword("password123");
+
+        when(userRepository.findByEmail(request.getEmail()))
+                .thenReturn(Optional.of(user));
+
+        when(passwordEncoder.matches(
+                request.getPassword(),
+                user.getPassword()
+        )).thenReturn(true);
+
+        when(jwtService.generateToken(user))
+                .thenReturn("test-jwt-token");
+
+        LoginResponse response = userService.userLogin(request);
+
+        assertEquals("test-jwt-token", response.getToken());
+        assertEquals("Bearer", response.getTokenType());
+
+        verify(userRepository).findByEmail(request.getEmail());
+        verify(passwordEncoder).matches(
+                request.getPassword(),
+                user.getPassword()
+        );
+        verify(jwtService).generateToken(user);
+    }
+
+    @Test
+    void userLogin_shouldThrowInvalidCredentialsException_whenPasswordIsWrong() {
+
+        User user = new User();
+        user.setId(1L);
+        user.setEmail("ankur@example.com");
+        user.setPassword("encodedPassword");
+
+        LoginRequest request = new LoginRequest();
+        request.setEmail("ankur@example.com");
+        request.setPassword("wrongPassword");
+
+        when(userRepository.findByEmail(request.getEmail()))
+                .thenReturn(Optional.of(user));
+
+        when(passwordEncoder.matches(
+                request.getPassword(),
+                user.getPassword()
+        )).thenReturn(false);
+
+        assertThrows(
+                InvalidCredentialsException.class,
+                () -> userService.userLogin(request)
+        );
+
+        verify(userRepository).findByEmail(request.getEmail());
+        verify(passwordEncoder).matches(
+                request.getPassword(),
+                user.getPassword()
+        );
+
+        verify(jwtService, never()).generateToken(any(User.class));
+    }
+
+    @Test
+    void userLogin_shouldThrowInvalidCredentialsException_whenEmailDoesNotExist() {
+
+        LoginRequest request = new LoginRequest();
+        request.setEmail("unknown@example.com");
+        request.setPassword("password123");
+
+        when(userRepository.findByEmail(request.getEmail()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                InvalidCredentialsException.class,
+                () -> userService.userLogin(request)
+        );
+
+        verify(userRepository).findByEmail(request.getEmail());
+        verify(passwordEncoder, never()).matches(anyString(), anyString());
+        verify(jwtService, never()).generateToken(any(User.class));
     }
 
 }
