@@ -60,7 +60,7 @@ public class TransactionController {
             summary = "Transfer money",
             description = "Transfers money from the authenticated user's account to another account"
     )
-    public List<TransactionResponse> transfer(@RequestBody TransferRequest request){
+    public List<TransactionResponse> transfer(@Valid @RequestBody TransferRequest request){
         return transactionService.transfer(request);
     }
 }
