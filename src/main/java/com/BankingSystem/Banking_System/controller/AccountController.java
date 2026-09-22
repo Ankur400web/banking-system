@@ -63,7 +63,7 @@ public class AccountController {
             summary = "Delete bank account",
             description = "Deletes an account when the account belongs to the authenticated user and has a zero balance"
     )
-    public ResponseEntity<Void> deleteAccount(@PathVariable String accountNumber) {
+    public ResponseEntity<Void> deleteAccount(@Valid @PathVariable String accountNumber) {
         accountService.deleteAccount(accountNumber);
         return ResponseEntity.noContent().build();
     }
