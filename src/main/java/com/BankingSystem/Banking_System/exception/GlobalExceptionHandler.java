@@ -2,7 +2,6 @@ package com.BankingSystem.Banking_System.exception;
 
 
 
-import com.BankingSystem.Banking_System.dto.AccountResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import com.BankingSystem.Banking_System.dto.ErrorResponse;
@@ -128,9 +127,9 @@ public class GlobalExceptionHandler {
                 .body(errorResponse);
     }
 
-    @ExceptionHandler(UserHasException.class)
+    @ExceptionHandler(UserHasAccountException.class)
     public ResponseEntity<ErrorResponse> handleUserHasException(
-            UserHasException exception) {
+            UserHasAccountException exception) {
 
         ErrorResponse errorResponse = new ErrorResponse();
 

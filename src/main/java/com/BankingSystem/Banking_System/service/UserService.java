@@ -5,7 +5,6 @@ import com.BankingSystem.Banking_System.exception.*;
 import com.BankingSystem.Banking_System.repository.AccountRepository;
 import com.BankingSystem.Banking_System.repository.UserRepository;
 import com.BankingSystem.Banking_System.entity.User;
-import org.springframework.scheduling.support.SimpleTriggerContext;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -156,7 +155,7 @@ public class UserService {
         }
 
         if (accountRepository.existsByUser(user)) {
-            throw new UserHasException(
+            throw new UserHasAccountException(
                     "Cannot delete user while accounts exist"
             );
         }

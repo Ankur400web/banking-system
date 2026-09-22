@@ -53,7 +53,7 @@ public class UserController {
             summary = "Update user details",
             description = "Retrieves the authenticated user's profile by user ID and update the user details"
     )
-    public UserResponse updateUserById(@PathVariable Long id, @RequestBody UpdateUserRequest request){return userService.updateUser(id, request);}
+    public UserResponse updateUserById(@PathVariable Long id,@Valid @RequestBody UpdateUserRequest request){return userService.updateUser(id, request);}
 
     @DeleteMapping("/{id}")
     @Operation(
