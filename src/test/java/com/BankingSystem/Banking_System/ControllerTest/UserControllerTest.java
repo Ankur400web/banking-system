@@ -1,6 +1,7 @@
 package com.BankingSystem.Banking_System.ControllerTest;
 
 import com.BankingSystem.Banking_System.controller.UserController;
+import com.BankingSystem.Banking_System.dto.ChangePasswordRequest;
 import com.BankingSystem.Banking_System.dto.CreateUserRequest;
 import com.BankingSystem.Banking_System.dto.UpdateUserRequest;
 import com.BankingSystem.Banking_System.dto.UserResponse;
@@ -385,6 +386,25 @@ public class UserControllerTest {
                 .andExpect(status().isForbidden());
 
         verify(userService).getUserById(1L);
+    }
+    @Test
+    void changePassword_shouldReturn200WhenSuccessful() throws Exception {
+
+        ChangePasswordRequest request = new ChangePasswordRequest();
+        request.setCurrentPassword("OldPassword123");
+        request.setNewPassword("NewPassword123");
+
+        doNothing().when(userService)
+                .changePassword(any(ChangePasswordRequest.class));
+
+        mockMvc.perform(
+                        put("/api/users/password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isOk());
+
+        verify(userService).changePassword(any(ChangePasswordRequest.class));
     }
 
 }
