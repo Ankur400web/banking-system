@@ -33,7 +33,7 @@ jobs:
       DB_URL: jdbc:mysql://127.0.0.1:3306/banking_db
       DB_USERNAME: banking_user
       DB_PASSWORD: ci_password
-      JWT_SECRET: ci_test_jwt_secret_123456789
+      JWT_SECRET: ci_test_jwt_secret_1234567890abcd
       JWT_EXPIRATION: 3600000
 
     steps:
