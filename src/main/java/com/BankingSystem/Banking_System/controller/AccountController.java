@@ -52,7 +52,6 @@ public class AccountController {
     public AccountResponse getAccountByAccountNumber(@PathVariable String accountNumber) {
         return accountService.getAccountByAccountNumber(accountNumber);
     }
-
     @GetMapping
     public List<AccountResponse> getAllAccounts() {
         return accountService.getAllAccounts();

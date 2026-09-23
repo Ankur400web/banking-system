@@ -13,6 +13,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Random;
@@ -29,10 +32,16 @@ public class AccountService {
         this.userRepository = userRepository;
     }
 
+    private static final Logger log =
+            LoggerFactory.getLogger(AccountService.class);
+
+
     public AccountResponse createAccount(CreateAccountRequest request){
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() ->
-                        new UserNotFoundException("User doesn't exist"));
+                .orElseThrow(() -> {
+                    log.warn("Account Creation Failed: User not found");
+                    return new UserNotFoundException("User doesn't exist");
+                });
 
         String accountNumber = generateAccountNumber();
 
@@ -45,6 +54,7 @@ public class AccountService {
 
 
         Account savedAccount = accountRepository.save(account);
+        log.info("Account saved");
 
         AccountResponse accountResponse = new AccountResponse();
 
@@ -55,6 +65,7 @@ public class AccountService {
         accountResponse.setCreatedAt(savedAccount.getCreatedAt());
         accountResponse.setUserId(savedAccount.getUser().getId());
 
+        log.info("Account created successfully");
         return accountResponse;
 
 
@@ -81,13 +92,17 @@ public class AccountService {
 
     public AccountResponse getAccountById(Long accId){
         Account account = accountRepository.findById(accId)
-                .orElseThrow(() -> new AccountNotFoundException("Account not found"));
+                .orElseThrow(() ->{
+                    log.warn("Account Retrieval Failed: Account doesn't exist");
+                    return new AccountNotFoundException("Account not found");
+                });
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         User user = (User) authentication.getPrincipal();
 
         if(!account.getUser().getId().equals(user.getId())){
+            log.warn("Unauthorized attempt to retrieve another account");
             throw new UnauthorizedAccountAccessException("You are not authorized to do this");
         }
 
@@ -100,12 +115,16 @@ public class AccountService {
         accountResponse.setCreatedAt(account.getCreatedAt());
         accountResponse.setUserId(account.getUser().getId());
 
+        log.info("Account retrieved successfully");
         return accountResponse;
     }
 
     public AccountResponse getAccountByAccountNumber(String accountNumber){
         Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new AccountNotFoundException("Account not found"));
+                .orElseThrow(() ->{
+                    log.warn("Account Retrieval Failed: AccountNumber Not found");
+                    return new AccountNotFoundException("Account not found");
+                });
 
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
@@ -113,6 +132,7 @@ public class AccountService {
         User user = (User) authentication.getPrincipal();
 
         if (!account.getUser().getId().equals(user.getId())) {
+            log.warn("Unauthorized attempt to retrieve another account by account number");
             throw new UnauthorizedAccountAccessException(
                     "You are not authorized to access this account"
             );
@@ -127,12 +147,15 @@ public class AccountService {
         accountResponse.setCreatedAt(account.getCreatedAt());
         accountResponse.setUserId(account.getUser().getId());
 
+        log.info("Account Retrieved Successfully");
         return accountResponse;
     }
 
     public List<AccountResponse> getAllAccounts(){
 
         List<Account> accounts = accountRepository.findAll();
+
+        log.info("Retrieved {} Accounts", accounts.size());
 
         return accounts.stream().map(account -> {
             AccountResponse accountResponse = new AccountResponse();
@@ -148,11 +171,17 @@ public class AccountService {
 
     public void deleteAccount(String accountNumber) {
         Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new AccountNotFoundException("Account not found"));
+                .orElseThrow(() -> {
+                    log.warn("Account Deletion Failed: Account doesn't exist");
+                    return new AccountNotFoundException("Account not found");
+                });
 
         if (account.getBalance().compareTo(BigDecimal.ZERO) != 0) {
+            log.warn("Account Deletion Failed: Balance must be zero");
             throw new IllegalStateException("Cannot delete account with non-zero balance");
         }
+
+        log.info("Account deleted Successfully");
         accountRepository.delete(account);
     }
 }

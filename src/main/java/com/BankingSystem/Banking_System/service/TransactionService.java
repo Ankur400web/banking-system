@@ -19,6 +19,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,10 +37,15 @@ public class TransactionService {
         this.accountRepository = accountRepository;
     }
 
+    public static final Logger log = LoggerFactory.getLogger(TransactionService.class);
+
     @Transactional
     public TransactionResponse deposit(DepositRequest deposit){
         Account account = accountRepository.findByAccountNumberForUpdate(deposit.getAccountNumber())
-                .orElseThrow(()-> new AccountNotFoundException("Account not found"));
+                .orElseThrow(()-> {
+                    log.warn("Fund Deposit Failed: Account not found");
+                    return new AccountNotFoundException("Account not found");
+                });
 
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
@@ -45,6 +53,7 @@ public class TransactionService {
         User user = (User) authentication.getPrincipal();
 
         if (!account.getUser().getId().equals(user.getId())) {
+            log.warn("Unauthorized attempt to access another account");
             throw new UnauthorizedAccountAccessException(
                     "You are not authorized to access this account"
             );
@@ -54,6 +63,7 @@ public class TransactionService {
         BigDecimal newBalance = account.getBalance().add(deposit.getAmount());
 
         account.setBalance(newBalance);
+        log.info("Balance Updated");
 
         Transaction transaction = new Transaction();
 
@@ -74,6 +84,7 @@ public class TransactionService {
         response.setBalanceAfter(transaction.getBalanceAfter());
         response.setCreatedAt(transaction.getCreatedAt());
 
+        log.info("Amount deposited successfully");
         return response;
 
 
@@ -82,13 +93,17 @@ public class TransactionService {
     @Transactional
     public TransactionResponse withDraw(WithdrawRequest request){
         Account account = accountRepository.findByAccountNumberForUpdate(request.getAccountNumber())
-                .orElseThrow(()-> new AccountNotFoundException("Account Not found"));
+                .orElseThrow(()-> {
+                    log.warn("Withdrawal Failed: Account not found");
+                    return new AccountNotFoundException("Account Not found");
+                });
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         User user = (User) authentication.getPrincipal();
 
         if (!account.getUser().getId().equals(user.getId())){
+            log.warn("Unauthorized attempt to withdraw from another account");
             throw new UnauthorizedAccountAccessException("You are not authorized to this account.");
         }
 
@@ -99,6 +114,7 @@ public class TransactionService {
         BigDecimal newBalance = account.getBalance().subtract(request.getAmount());
 
         account.setBalance(newBalance);
+        log.info("Balance Updated after withdrawal");
 
         Transaction transaction = new Transaction();
 
@@ -119,6 +135,7 @@ public class TransactionService {
         response.setBalanceAfter(transaction.getBalanceAfter());
         response.setCreatedAt(transaction.getCreatedAt());
 
+        log.info("Amount Withdraw Successful");
         return response;
 
 
@@ -126,13 +143,17 @@ public class TransactionService {
 
     public List<TransactionResponse> transactionHistory(String accNum){
         Account account = accountRepository.findByAccountNumber(accNum)
-                .orElseThrow(()-> new AccountNotFoundException("Account doesn't exist"));
+                .orElseThrow(()-> {
+                    log.warn("Transaction History Retrieval Failed: Account not found");
+                    return new AccountNotFoundException("Account doesn't exist");
+                });
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         User authenticatedUser = (User) authentication.getPrincipal();
 
         if (!account.getUser().getId().equals(authenticatedUser.getId())){
+            log.warn("Unauthorized attempt to retrieve history from another account");
             throw new UnauthorizedAccountAccessException("You are not authorized to check transaction history");
         }
 
@@ -152,28 +173,39 @@ public class TransactionService {
 
                 responses.add(response);
         }
+        log.info("Retrieved {} Transaction History", transactions.size());
+
         return responses;
     }
 
     @Transactional
     public List<TransactionResponse> transfer(TransferRequest request){
         Account fromAccount = accountRepository.findByAccountNumberForUpdate(request.getFromAccountNumber())
-                .orElseThrow(()-> new AccountNotFoundException("Source account doesn't exist"));
+                .orElseThrow(()-> {
+                    log.warn("Transfer failed: source account not found");
+                    return new AccountNotFoundException("Source account doesn't exist");
+                });
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         User user = (User) authentication.getPrincipal();
 
         if (!fromAccount.getUser().getId().equals(user.getId())){
+            log.warn("Unauthorized attempt to transfer money");
             throw new UnauthorizedAccountAccessException("You are not authorized to transfer money");
         }
         
         Account toAccount = accountRepository.findByAccountNumberForUpdate(request.getToAccountNumber())
-                .orElseThrow(()-> new AccountNotFoundException("Destination account not found"));
+                .orElseThrow(()-> {
+                    log.warn("Transfer failed: destination account not found");
+                    return new AccountNotFoundException("Destination account not found");
+                });
         
         if (fromAccount.getAccountNumber().equals(toAccount.getAccountNumber())){
+            log.warn("Transfer failed: Not Allowed to transfer to the same account");
             throw new SameAccountException("Cannot transfer to same account");
         } else if (request.getAmount().compareTo(fromAccount.getBalance())>0) {
+            log.warn("Transfer failed: Insufficient Balance");
             throw new InsufficientBalanceException("Insufficient funds to transfer");
         }
 
@@ -181,9 +213,12 @@ public class TransactionService {
 
         BigDecimal newToBalance = toAccount.getBalance().add(request.getAmount());
 
+
         fromAccount.setBalance(newFromBalance);
+        log.info("Source account balance updated");
 
         toAccount.setBalance(newToBalance);
+        log.info("Destination account balance updated");
 
         accountRepository.save(fromAccount);
         accountRepository.save(toAccount);
@@ -225,6 +260,10 @@ public class TransactionService {
         responses.add(fromResponse);
         responses.add(toResponse);
 
+        log.info("Transfer from {} to {} amount {}",
+                request.getFromAccountNumber(),
+                request.getToAccountNumber(),
+                request.getAmount());
         return responses;
 
 
