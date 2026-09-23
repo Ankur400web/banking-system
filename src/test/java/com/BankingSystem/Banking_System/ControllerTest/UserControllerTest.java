@@ -402,7 +402,7 @@ public class UserControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         verify(userService).changePassword(any(ChangePasswordRequest.class));
     }
