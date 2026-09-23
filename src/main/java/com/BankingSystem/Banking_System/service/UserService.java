@@ -10,6 +10,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 
 
@@ -33,10 +36,14 @@ public class UserService {
         this.accountRepository = accountRepository;
     }
 
+    private static final Logger log =
+            LoggerFactory.getLogger(UserService.class);
+
 
 
     public UserResponse createUser(CreateUserRequest request){
         if(userRepository.existsByEmail(request.getEmail())){
+            log.warn("User Creation Failed: Email Already Exist");
             throw new DuplicateEmailException("Email Already Exist");
         }
 
@@ -48,6 +55,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         User savedUser = userRepository.save(user);
+        log.info("User created successfully");
 
         UserResponse userResponse = new UserResponse();
 
@@ -65,6 +73,7 @@ public class UserService {
         List<User> users = userRepository.findAll();
 
         if ((users.isEmpty())){
+            log.warn("User Retrieval Failed: No user found");
             throw new UserNotFoundException("User doesn't exist");
         }
 
@@ -81,6 +90,8 @@ public class UserService {
             userResponsesList.add(userResponse);
         }
 
+        log.info("Retrieved {} Users", users.size());
+
         return userResponsesList;
 
     }
@@ -88,14 +99,16 @@ public class UserService {
     public UserResponse getUserById(Long id) {
 
         User user = userRepository.findById(id)
-                .orElseThrow(() ->
-                        new UserNotFoundException("User doesn't exist"));
-
+                .orElseThrow(() ->{
+                        log.warn("User Retrieval Failed: User not found");
+                        return new UserNotFoundException("User doesn't exist");
+                        });
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         User authenticatedUser = (User) authentication.getPrincipal();
 
         if (!authenticatedUser.getId().equals(id)){
+            log.warn("Unauthorized attempt to access another user's account");
             throw new UnauthorizedAccountAccessException("You are not authorized");
         }
 
@@ -108,18 +121,23 @@ public class UserService {
         userResponse.setEmail(user.getEmail());
         userResponse.setCreatedAt(user.getCreatedAt());
 
+        log.info("User Retrieved Successfully");
         return userResponse;
     }
 
     public UserResponse updateUser(Long id, UpdateUserRequest request){
         User user = userRepository.findById(id)
-            .orElseThrow(()-> new UserNotFoundException("User doesn't exist"));
+            .orElseThrow(()->{
+                log.warn("User Update Failed: User not found");
+                return new UserNotFoundException("User doesn't exist");
+            });
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         User authenticatedUser = (User) authentication.getPrincipal();
 
         if (!authenticatedUser.getId().equals(id)){
+            log.warn("Unauthorized attempt to update another user's account");
             throw new UnauthorizedAccountAccessException("You are not authorized to modify other users");
         }
 
@@ -137,6 +155,7 @@ public class UserService {
         userResponse.setId(user.getId());
         userResponse.setCreatedAt(user.getCreatedAt());
 
+        log.info("User Updated Successfully");
         return userResponse;
 
     }
@@ -144,30 +163,40 @@ public class UserService {
     public void deleteUserById(Long id){
 
         User user = userRepository.findById(id)
-                        .orElseThrow(()-> new UserNotFoundException("User doesn't exist"));
+                        .orElseThrow(()-> {
+                            log.warn("User Deletion Failed: User not found");
+                            return new UserNotFoundException("User doesn't exist");
+                        });
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         User authenticatedUser = (User) authentication.getPrincipal();
 
         if (!authenticatedUser.getId().equals(id)){
+            log.warn("Unauthorized attempt to delete another account");
             throw new UnauthorizedAccountAccessException("You are not authorized to delete user");
         }
 
         if (accountRepository.existsByUser(user)) {
+            log.warn("User deletion blocked: user has existing accounts");
             throw new UserHasAccountException(
                     "Cannot delete user while accounts exist"
             );
         }
 
+        log.info("User deleted successfully");
         userRepository.delete(user);
     }
 
     public LoginResponse userLogin(LoginRequest request){
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(()-> new InvalidCredentialsException("Invalid email or password"));
+                .orElseThrow(()->{
+                    log.warn("User Login Failed: INVALID CREDENTIALS");
+                    return new InvalidCredentialsException("Invalid email or password");
+                });
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())){
+            log.warn("Login Failed: INVALID CREDENTIALS");
             throw new InvalidCredentialsException("Invalid email or password");
         }
 
@@ -181,6 +210,7 @@ public class UserService {
         response.setToken(token);
         response.setTokenType("Bearer");
 
+        log.info("User login successful");
         return response;
 
 
@@ -197,6 +227,7 @@ public class UserService {
                 request.getCurrentPassword(),
                 user.getPassword())) {
 
+            log.warn("Password change failed: current password is incorrect");
             throw new InvalidPasswordException(
                     "Current password is incorrect"
             );
@@ -206,6 +237,7 @@ public class UserService {
                 request.getNewPassword(),
                 user.getPassword())) {
 
+            log.warn("Password change failed: Can't use old password");
             throw new InvalidPasswordException(
                     "New password must be different from current password"
             );
@@ -215,6 +247,7 @@ public class UserService {
                 passwordEncoder.encode(request.getNewPassword())
         );
 
+        log.info("Password changed successfully");
         userRepository.save(user);
     }
 }
