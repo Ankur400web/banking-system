@@ -10,6 +10,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,9 +20,12 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse> handlerUserNotFound(UserNotFoundException userNotFoundException){
+        log.warn("User not found: {}", userNotFoundException.getMessage());
 
         ErrorResponse errorResponse = new ErrorResponse();
 
@@ -36,6 +42,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException methodArgumentNotValidException){
 
+        log.warn("Request validation failed");
         Map<String, String> errors = new HashMap<>();
 
         for(FieldError fieldError: methodArgumentNotValidException.getBindingResult().getFieldErrors()){
@@ -60,6 +67,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateEmailException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateEmail(DuplicateEmailException exception){
+        log.warn("User creation failed: email already exists");
         ErrorResponse errorResponse = new ErrorResponse();
 
         errorResponse.setStatus(HttpStatus.CONFLICT.value());
@@ -74,6 +82,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccountNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleAccountNotFound(AccountNotFoundException exception){
+        log.warn("Account not found: {}", exception.getMessage());
 
         ErrorResponse errorResponse = new ErrorResponse();
 
@@ -90,6 +99,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInsufficientBalance(
             InsufficientBalanceException exception) {
 
+        log.warn("Transaction failed: insufficient balance");
+
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setStatus(HttpStatus.BAD_REQUEST.value());
         errorResponse.setMessage(exception.getMessage());
@@ -100,8 +111,9 @@ public class GlobalExceptionHandler {
                 .body(errorResponse);
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(InsufficientBalanceException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException exception){
+        log.warn("Authentication failed: invalid credentials");
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
         errorResponse.setMessage(exception.getMessage());
@@ -115,6 +127,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UnauthorizedAccountAccessException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorizedAccountAccess(
             UnauthorizedAccountAccessException exception) {
+
+        log.warn("Unauthorized account access attempt");
 
         ErrorResponse errorResponse = new ErrorResponse();
 
@@ -131,6 +145,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleUserHasException(
             UserHasAccountException exception) {
 
+        log.warn("User deletion blocked: user still has accounts");
+
         ErrorResponse errorResponse = new ErrorResponse();
 
         errorResponse.setStatus(HttpStatus.CONFLICT.value());
@@ -145,6 +161,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidPasswordException.class)
     public ResponseEntity<ErrorResponse> handleInvalidPassword(
             InvalidPasswordException exception) {
+
+        log.warn("Password operation failed: invalid password");
 
         ErrorResponse errorResponse = new ErrorResponse();
 
@@ -162,6 +180,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleSameAccountException(
             SameAccountException ex) {
 
+        log.warn("Transfer failed: source and destination accounts are the same");
+
         ErrorResponse error = new ErrorResponse();
 
         error.setStatus(HttpStatus.BAD_REQUEST.value());
@@ -175,6 +195,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalStateException(
             IllegalStateException ex) {
+        log.warn("Illegal application state: {}", ex.getMessage());
+
 
         ErrorResponse error = new ErrorResponse();
                 error.setStatus(HttpStatus.BAD_REQUEST.value());

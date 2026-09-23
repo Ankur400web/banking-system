@@ -14,6 +14,10 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 import java.io.IOException;
 import java.util.Collections;
 
@@ -22,6 +26,8 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
+
+    private static final Logger log = LoggerFactory.getLogger(JWTAuthenticationFilter.class);
 
     public JWTAuthenticationFilter(
             JwtService jwtService,
@@ -55,7 +61,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
             // 4. Extract email from JWT
             String username = jwtService.extractUsername(token);
 
-            System.out.println("JWT username: " + username);
+            log.debug("JWT username extracted from JWT");
 
             // 5. Don't authenticate if authentication already exists
             if (username != null &&
@@ -86,14 +92,15 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext()
                             .setAuthentication(authentication);
 
-                    System.out.println("Authenticated user: " +
-                            authentication.getPrincipal());
+                    log.info("User authenticated successfully");
                 }
             }
 
         } catch (JwtException | IllegalArgumentException exception) {
             // Invalid/expired/malformed JWT
             // Leave the request unauthenticated.
+
+            log.warn("JWT authentication failed: invalid or expired token");
         }
 
         // 11. Continue the filter chain

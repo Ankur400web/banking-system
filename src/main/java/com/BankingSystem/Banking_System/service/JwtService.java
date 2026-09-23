@@ -5,6 +5,9 @@ import com.BankingSystem.Banking_System.entity.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +25,8 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long expiration;
 
+    public static final Logger log = LoggerFactory.getLogger(JwtService.class);
+
     private SecretKey getSigningKey(){
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
@@ -29,12 +34,15 @@ public class JwtService {
 
     public String generateToken(User user){
 
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .subject(user.getEmail())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey())
                 .compact();
+
+        log.debug("JWT token generated");
+        return token;
     }
 
     public String extractUsername(String token){
@@ -59,10 +67,17 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, User user){
+
         String username = extractUsername(token);
 
-        return username.equals(user.getEmail())
+        boolean valid = username.equals(user.getEmail())
                 && !isTokenExpired(token);
+
+        if (!valid) {
+            log.warn("JWT validation failed");
+        }
+
+        return valid;
     }
 
 
