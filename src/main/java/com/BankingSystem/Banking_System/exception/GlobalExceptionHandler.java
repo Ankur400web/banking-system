@@ -111,7 +111,7 @@ public class GlobalExceptionHandler {
                 .body(errorResponse);
     }
 
-    @ExceptionHandler(InsufficientBalanceException.class)
+    @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException exception){
         log.warn("Authentication failed: invalid credentials");
         ErrorResponse errorResponse = new ErrorResponse();
